@@ -30,32 +30,32 @@ export default ({ armsOnly, blockPed }) => {
 			<Wrapper>
 				<AppBar
 					position="static"
-					color="secondary"
-					style={{ paddingBottom: 15 }}
+					color="transparent"
+					style={{ marginBottom: 15, boxShadow: 'none' }}
 				>
 					<Tabs
 						value={value}
 						onChange={handleChange}
-						variant="scrollable"
+						variant="fullWidth"
 						indicatorColor="primary"
 						textColor="primary"
 					>
-						<Tab label="Shape" />
+						{/* <Tab label="Shape" /> */}
 						<Tab label="Skin" />
 						{!blockPed && <Tab label="Ped" />}
 					</Tabs>
 				</AppBar>
-				<TabPanel value={value} index={0}>
+				{/* <TabPanel value={value} index={0}>
 					<Component
 						label={'Arms'}
 						component={ped.customization.components.torso}
 						name={'torso'}
 					/>
-				</TabPanel>
-				<TabPanel value={value} index={1}>
+				</TabPanel> */}
+				<TabPanel value={value} index={0}>
 					<BodyOverlays />
 				</TabPanel>
-				{!blockPed && <TabPanel value={value} index={2}>
+				{!blockPed && <TabPanel value={value} index={1}>
 					<Ped />
 				</TabPanel>}
 			</Wrapper>

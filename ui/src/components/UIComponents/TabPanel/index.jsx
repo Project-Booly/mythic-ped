@@ -4,7 +4,6 @@ import { makeStyles } from '@mui/styles';
 
 const useStyles = makeStyles((theme) => ({
 	tabPanel: {
-		background: theme.palette.secondary.main,
 		height: '100%',
 		overflow: 'auto',
 	},

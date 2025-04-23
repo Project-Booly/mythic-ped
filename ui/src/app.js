@@ -107,12 +107,15 @@ const render = () => {
 						'&::-webkit-scrollbar-thumb': {
 							background: '#8a0000',
 							transition: 'background ease-in 0.15s',
+							borderRadius: '50vh',
 						},
 						'&::-webkit-scrollbar-thumb:hover': {
 							background: '#56000017',
 						},
 						'&::-webkit-scrollbar-track': {
-							background: 'transparent',
+							background: 'rgba(24, 24, 24, .25)',
+							borderRadius: '50vh',
+							marginBottom: '5vh',
 						},
 					},
 				},

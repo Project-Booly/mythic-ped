@@ -34,11 +34,11 @@ RegisterNUICallback("Cancel", function(data, cb)
 	cb(Ped.Customization:Cancel())
 end)
 
-RegisterNUICallback("SaveImport", function(data, cb)
-	if data.Label == '' then return Notification:Error("Outfit Label can't be empty.") end
-	if data.Code == '' then return Notification:Error("Outfit Code can't be empty.") end
-
-    TriggerEvent("Wardrobe:Client:ApplySharedOutfit", data.Label, data.Code)
+RegisterNUICallback('SaveImport', function(data, cb)
+	if data.Label == '' then Notification:Error('Outfit Label can\'t be empty') end
+	if data.Code == '' then Notification:Error('Outfit Code can\'t be empty') end
+	
+	TriggerEvent("Wardrobe:Client:ApplyImportedOutfit", data.Label, data.Code)
 end)
 
 function deepcopy(orig)
@@ -64,18 +64,22 @@ function ToggleNekked(data)
 		local isMale = LocalPlayer.state.Character:GetData("Gender") == 0
 		if isMale then
 			nakedPed.customization.components.torso.drawableId = 15
-			nakedPed.customization.components.torso2.drawableId = 252
+			nakedPed.customization.components.torso2.drawableId = 15
 			nakedPed.customization.components.undershirt.drawableId = 15
-			nakedPed.customization.components.leg.drawableId = 21
+			nakedPed.customization.components.leg.drawableId = 40
+			nakedPed.customization.components.leg.textureId = 0
 			nakedPed.customization.components.kevlar.drawableId = 0
-			nakedPed.customization.components.shoes.drawableId = 34
+			nakedPed.customization.components.shoes.drawableId = 47
+			nakedPed.customization.components.shoes.textureId = 0
 		else
 			nakedPed.customization.components.torso.drawableId = 15
 			nakedPed.customization.components.torso2.drawableId = 15
 			nakedPed.customization.components.undershirt.drawableId = 14
 			nakedPed.customization.components.leg.drawableId = 15
+			nakedPed.customization.components.leg.textureId = 0
 			nakedPed.customization.components.kevlar.drawableId = 0
 			nakedPed.customization.components.shoes.drawableId = 35
+			nakedPed.customization.components.shoes.textureId = 0
 		end
 
 		nakedPed.customization.components.mask.drawableId = 0
@@ -150,7 +154,7 @@ RegisterNUICallback("SetPed", function(data, cb)
 	RequestModel(model)
 	local c = 0
 	while not HasModelLoaded(model) do
-		Citizen.Wait(1)
+		Wait(1)
 		c = c + 1
 		if c >= 2000 then
 			cb(false)
@@ -170,7 +174,7 @@ RegisterNUICallback("SetPed", function(data, cb)
 	SetPlayerModel(PlayerId(), model)
 	player = PlayerPedId()
 	SetEntityMaxHealth(player, 200)
-	SetEntityHealth(player, GetEntityMaxHealth(player))
+	SetEntityHealth(player, 200--[[GetEntityMaxHealth(player)]])
 	LocalPlayer.state.ped = player
 	SetPedDefaultComponentVariation(player)
 	SetEntityAsMissionEntity(player, true, true)
@@ -334,7 +338,7 @@ RegisterNUICallback("GetNumberOfPedDrawableVariations", function(data, cb)
 
 	local gender = LocalPlayer.state.Character:GetData("Gender")
 	local comps = {}
-	for i = 0, GetNumberOfPedDrawableVariations(PlayerPedId(), data.componentId) do
+	for i = 0, GetNumberOfPedDrawableVariations(PlayerPedId(), data.componentId) - 1 do
 		if
 			GlobalState["ClothingStoreHidden"].components[data.componentId] == nil
 			or GlobalState["ClothingStoreHidden"].props[data.componentId][gender] == nil
@@ -371,7 +375,7 @@ RegisterNUICallback("GetNumberOfPedPropDrawableVariations", function(data, cb)
 
 	local gender = LocalPlayer.state.Character:GetData("Gender")
 	local comps = {}
-	for i = 0, GetNumberOfPedPropDrawableVariations(PlayerPedId(), data.componentId) do
+	for i = 0, GetNumberOfPedPropDrawableVariations(PlayerPedId(), data.componentId) - 1 do
 		if
 			GlobalState["ClothingStoreHidden"].components[data.componentId] == nil
 			or GlobalState["ClothingStoreHidden"].props[data.componentId][gender] == nil

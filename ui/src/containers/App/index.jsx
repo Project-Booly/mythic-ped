@@ -1,5 +1,5 @@
 import React, { Fragment, useEffect, useState } from 'react';
-import { connect, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { makeStyles } from '@mui/styles';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { fas } from '@fortawesome/free-solid-svg-icons';
@@ -14,6 +14,7 @@ import Surgery from '../Surgery/Surgery';
 import Tip from '../Tip';
 import Barber from '../Barber';
 import Tattoo from '../Tattoo';
+import CamBar from '../CamBar';
 
 library.add(fab, fas, far);
 
@@ -26,7 +27,7 @@ const useStyles = makeStyles((theme) => ({
 	},
 }));
 
-export default connect()((props) => {
+export default function App() {
 	const classes = useStyles();
 	const hidden = useSelector((state) => state.app.hidden);
 	const state = useSelector((state) => state.app.state);
@@ -56,12 +57,27 @@ export default connect()((props) => {
 		}
 	}, [state]);
 
+	const backgroundImageUrl = process.env.NODE_ENV !== 'production'
+		? `url(https://kappa.lol/6rHZS)`
+		: 'none';
+
+	const appStyle = {
+		backgroundImage: backgroundImageUrl,
+		backgroundSize: 'cover',
+		backgroundPosition: 'center',
+		height: '100vh',
+		width: '100%',
+		zIndex: '-999',
+		backgroundColor: process.env.NODE_ENV !== 'production' ? '#c4c4c4' : '',
+	};
+
 	return (
 		<Fade in={!hidden}>
-			<div className="App">
+			<div className="App" style={appStyle}>
 				{loading ? <Loader /> : display}
 				<Tip />
+				<CamBar />
 			</div>
 		</Fade>
 	);
-});
+}

@@ -19,13 +19,13 @@ export default (props) => {
 		<Wrapper>
 			<AppBar
 				position="static"
-				color="secondary"
-				style={{ paddingBottom: 15 }}
+				color="transparent"
+				style={{ marginBottom: 15, boxShadow: 'none' }}
 			>
 				<Tabs
 					value={value}
 					onChange={handleChange}
-					variant="scrollable"
+					variant="fullWidth"
 					indicatorColor="primary"
 					textColor="primary"
 				>

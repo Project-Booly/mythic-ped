@@ -22,6 +22,7 @@ const useStyles = makeStyles((theme) => ({
 		justifyContent: 'space-around',
 		background: theme.palette.secondary.light,
 		border: `2px solid ${theme.palette.border.divider}`,
+		userSelect: 'none',
 	},
 }));
 
@@ -68,7 +69,7 @@ export default connect()((props) => {
 	};
 
 	return (
-		<ElementBox label={props.label} bodyClass={classes.body}>
+		<ElementBox label={(props.title ?? props.label)} bodyClass={classes.body}>
 			<Ticker
 				label={props.label}
 				event={onChange}

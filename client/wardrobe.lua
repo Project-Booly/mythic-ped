@@ -1,3 +1,5 @@
+local _sharePromise = nil
+
 AddEventHandler("Wardrobe:Shared:DependencyUpdate", RetrieveWardrobeComponents)
 function RetrieveWardrobeComponents()
 	Callbacks = exports["mythic-base"]:FetchComponent("Callbacks")
@@ -8,7 +10,7 @@ function RetrieveWardrobeComponents()
 	Confirm = exports["mythic-base"]:FetchComponent("Confirm")
 	Sounds = exports["mythic-base"]:FetchComponent("Sounds")
 	Wardrobe = exports["mythic-base"]:FetchComponent("Wardrobe")
-	Admin = exports['mythic-base']:FetchComponent('Admin')
+	Admin = exports["mythic-base"]:FetchComponent("Admin")
 end
 
 AddEventHandler("Core:Shared:Ready", function()
@@ -27,6 +29,43 @@ AddEventHandler("Core:Shared:Ready", function()
 			return
 		end
 		RetrieveWardrobeComponents()
+
+		Callbacks:RegisterClientCallback("Wardrobe:Sharing:Begin", function(data, cb)
+			if _sharePromise == nil then
+				_sharePromise = promise.new()
+				Confirm:Show(
+					'Confirm Outfit Sharing',
+					{
+						no = 'Wardrobe:Sharing:Deny',
+						yes = 'Wardrobe:Sharing:Confirm',
+					},
+					string.format(
+						[[
+							Please confirm that you would like to recieve the outfit below.<br>
+							Outfit Name: %s<br>
+						]],
+						data.label
+					),
+					{},
+					'Refuse',
+					'Accept'
+				)
+
+				cb(Citizen.Await(_sharePromise))
+			else
+				cb(false)
+			end
+		end)
+
+		AddEventHandler('Wardrobe:Sharing:Confirm', function(data)
+			_sharePromise:resolve(true)
+            _sharePromise = nil
+		end)
+
+		AddEventHandler('Wardrobe:Sharing:Deny', function(data)
+			_sharePromise:resolve(false)
+            _sharePromise = nil
+		end)
 	end)
 end)
 
@@ -46,6 +85,20 @@ AddEventHandler("Wardrobe:Client:SaveNew", function(data)
 			},
 		},
 	}, "Wardrobe:Client:DoSave", data)
+end)
+
+AddEventHandler("Wardrobe:Client:Rename", function(data)
+	Input:Show("Outfit Name", "Outfit Name", {
+		{
+			id = "name",
+			type = "text",
+			options = {
+				inputProps = {
+					maxLength = 24,
+				},
+			},
+		},
+	}, "Wardrobe:Client:DoRename", data.index)
 end)
 
 AddEventHandler("Wardrobe:Client:SaveExisting", function(data)
@@ -71,6 +124,13 @@ AddEventHandler("Wardrobe:Client:DoSave", function(values, data)
 			Notification:Error("Unable to Save Outfit")
 		end
 	end)
+end)
+
+AddEventHandler("Wardrobe:Client:Replace", function(data)
+	Confirm:Show(string.format("Are you sure you want to replace %s?", data.label), {
+		yes = "Wardrobe:Client:SaveExisting",
+		no = "Wardrobe:Client:Delete:No",
+	}, "", data, 'Wait No', 'Replace it')
 end)
 
 AddEventHandler("Wardrobe:Client:Delete", function(data)
@@ -100,7 +160,7 @@ AddEventHandler("Wardrobe:Client:Equip", function(data)
 	end)
 end)
 
-AddEventHandler("Wardrobe:Client:shareOutfit", function(data)
+AddEventHandler("Wardrobe:Client:startImportOutfit", function(data)
 	Callbacks:ServerCallback("Wardrobe:getOutfitById", data.index, function(outfit)
 
 		if not outfit then
@@ -121,14 +181,14 @@ AddEventHandler("Wardrobe:Client:shareOutfit", function(data)
 	end)
 end)
 
-AddEventHandler("Wardrobe:Client:ApplySharedOutfit", function(Label, Code)
+AddEventHandler("Wardrobe:Client:ApplyImportedOutfit", function(Label, Code)
 	Callbacks:ServerCallback("Wardrobe:GetExportClothingByCode", Code, function(outfit)
 
 		if not outfit then
 			Notification:Error('Code does not exist')
 			return
 		end
-		
+
 		local data = {
 			label = Label,
 			outfitdata = outfit,
@@ -145,6 +205,54 @@ AddEventHandler("Wardrobe:Client:ApplySharedOutfit", function(Label, Code)
 	end)
 end)
 
+AddEventHandler("Wardrobe:Client:DoRename", function(values, data) 
+	Callbacks:ServerCallback("Wardrobe:Rename", {
+		index = data,
+		name = values.name,
+	}, function(state)
+		if state then
+			Notification:Success("Outfit Renamed")
+			Wardrobe:Show()
+		else
+			Notification:Error("Unable to Rename Outfit")
+		end
+	end)
+end)
+
+AddEventHandler("Wardrobe:Client:ShareOpts", function(data)
+	Confirm:Show(string.format("Share %s?", data.label), {
+		yes = "Wardrobe:Client:Share",
+		no = "Wardrobe:Client:startExportingOutfit",
+	}, "Share to Nearby civs or Get an import code to send to cunts", data, 'Get Code', 'Share Nearby')
+end)
+
+AddEventHandler("Wardrobe:Client:Share", function(data)
+	Callbacks:ServerCallback("Wardrobe:Share", data.index, function(state)
+		if not state then
+			Notification:Error("Unable to Share Outfit")
+		end
+	end)
+end)
+
+RegisterNetEvent("Wardrobe:Client:MoveUp", function(data)
+	Callbacks:ServerCallback("Wardrobe:MoveUp", data, function(state)
+		if state then
+			Wardrobe:Show()
+		else
+			Notification:Error("Unable to Change Order")
+		end
+	end)
+end)
+
+RegisterNetEvent("Wardrobe:Client:MoveDown", function(data)
+	Callbacks:ServerCallback("Wardrobe:MoveDown", data, function(state)
+		if state then
+			Wardrobe:Show()
+		else
+			Notification:Error("Unable to Change Order")
+		end
+	end)
+end)
 
 RegisterNetEvent("Wardrobe:Client:ShowBitch", function(eventRoutine)
 	Wardrobe:Show()
@@ -156,27 +264,42 @@ WARDROBE = {
 			local items = {}
 			for k, v in pairs(data) do
 				if v.label ~= nil then
+					local actions = {
+						{
+							icon = "floppy-disk",
+							event = "Wardrobe:Client:Replace",
+						},
+						{
+							icon = "shirt",
+							event = "Wardrobe:Client:Equip",
+						},
+						{
+							icon = "share",
+							event = "Wardrobe:Client:ShareOpts",
+						},
+						{
+							icon = "signature",
+							event = "Wardrobe:Client:Rename",
+						},
+						{
+							icon = "x",
+							event = "Wardrobe:Client:Delete",
+						}
+					}
+
+					if (k == #data) then
+						table.insert(actions, 1, {icon = "arrow-up", event = "Wardrobe:Client:MoveUp"})
+					elseif (k == 1) then
+						table.insert(actions, 1, {icon = "arrow-down", event = "Wardrobe:Client:MoveDown"})
+					else
+						table.insert(actions,1, {icon = "arrow-up", event = "Wardrobe:Client:MoveUp"})
+						table.insert(actions,2, {icon = "arrow-down", event = "Wardrobe:Client:MoveDown"})
+					end
+
 					table.insert(items, {
 						label = v.label,
 						description = string.format("Outfit #%s", k),
-						actions = {
-							{
-								icon = "rotate",
-								event = "Wardrobe:Client:SaveExisting",
-							},
-							{
-								icon = "shirt",
-								event = "Wardrobe:Client:Equip",
-							},
-							{
-								icon = "upload",
-								event = "Wardrobe:Client:shareOutfit",
-							},
-							{
-								icon = "x",
-								event = "Wardrobe:Client:Delete",
-							},
-						},
+						actions = actions,
 						data = {
 							index = k,
 							label = v.label,

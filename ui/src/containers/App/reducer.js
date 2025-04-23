@@ -1,6 +1,6 @@
 export const initialState = {
-	hidden: true,
-	state: '',
+	hidden: process.env.NODE_ENV == 'production',
+	state: process.env.NODE_ENV != 'production' ? 'CREATOR' : '',
 	loading: false,
 	camera: 0,
 	isNekked: false,
@@ -10,6 +10,7 @@ export const initialState = {
 		BARBER: 100,
 		SHOP: 100,
 		TATTOO: 100,
+		SURGERY: 10000,
 	},
 	ped: {
 		model: '',

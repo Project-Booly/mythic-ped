@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { FormGroup, FormControlLabel, Checkbox } from '@mui/material';
+import { FormGroup, FormControlLabel, Checkbox, Switch } from '@mui/material';
 import { makeStyles } from '@mui/styles';
 
 import Nui from '../../util/Nui';
@@ -8,11 +8,19 @@ import PedModels from './Ped/peds';
 
 const useStyles = makeStyles((theme) => ({
 	nekked: {
+		zIndex: 50,
 		position: 'absolute',
-		top: 0,
-		left: 8,
+		bottom: '6.5vh',
+		right: '29vh',
 		width: 'fit-content',
 		margin: 'auto',
+		
+		background: `${theme.palette.secondary.main}a9`,
+		padding: '5px 5px 5px 15px',
+		borderRadius: '1vh',
+		userSelect: 'none',
+		
+		transform: 'rotateX(10deg) rotateY(10deg)',
 	},
 }));
 
@@ -55,12 +63,12 @@ export default (props) => {
 		<FormGroup className={classes.nekked}>
 			<FormControlLabel
 				control={
-					<Checkbox
+					<Switch
 						checked={isNekked || isForced}
 						disabled={isForced || loading || curr != 0}
 					/>
 				}
-				label="Lets Get Nekked"
+				label="Hide Clothes"
 				onChange={onChange}
 			/>
 		</FormGroup>

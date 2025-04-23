@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { FormGroup, FormControlLabel, Checkbox } from '@mui/material';
+import { FormGroup, FormControlLabel, Checkbox, Switch } from '@mui/material';
 import { makeStyles } from '@mui/styles';
 
 import { Slider, Ticker } from '../../UIComponents';
@@ -12,6 +12,7 @@ const useStyles = makeStyles((theme) => ({
 		width: 'fit-content',
 		margin: 'auto',
 		padding: 15,
+		userSelect: 'none',
 	},
 	body: {
 		maxHeight: '100%',
@@ -21,12 +22,13 @@ const useStyles = makeStyles((theme) => ({
 		gridGap: 0,
 		gridTemplateColumns: '100%',
 		justifyContent: 'space-between',
-		margin: 25,
+		margin: 0,
 		background: theme.palette.secondary.light,
 		border: `2px solid ${theme.palette.border.divider}`,
 		'&.advanced': {
 			gridTemplateColumns: '50% 50%',
 		},
+		userSelect: 'none',
 	},
 }));
 
@@ -56,7 +58,7 @@ export default (props) => {
 		<div style={{ height: '100%' }}>
 			<FormGroup className={classes.advCheck}>
 				<FormControlLabel
-					control={<Checkbox checked={advanced} />}
+					control={<Switch checked={advanced} />}
 					label="Advanced Face Mixers"
 					onChange={onCheckChange}
 				/>

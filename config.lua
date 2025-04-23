@@ -2,6 +2,8 @@ Config = {}
 
 Config.DrawDistance = 10
 
+Config.wakeupAnimation = false -- plays animation where the player wakes up from the ground
+
 Config.Tattoos = {
 	["mpbusiness_overlays"] = {
 		"MP_Buis_M_Neck_000",

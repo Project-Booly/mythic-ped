@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Tab, Tabs, ButtonGroup, Button, TextField } from '@mui/material';
+import { Tab, Tabs, ButtonGroup, Button, Tooltip, TextField } from '@mui/material';
 import { makeStyles } from '@mui/styles';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
@@ -14,231 +14,239 @@ import Naked from '../../components/PedComponents/Naked';
 import Nui from '../../util/Nui';
 
 const useStyles = makeStyles((theme) => ({
-  save: {
-    position: 'absolute',
-    bottom: '1%',
-    right: '1%',
-    '& svg': {
-      marginLeft: 6,
-    },
-  },
-  camBar: {
-    background: theme.palette.secondary.dark,
-    height: 'fit-content',
-    width: '100vw',
-  },
-  btnBar: {
-    background: theme.palette.secondary.dark,
-    width: 'fit-content',
-    height: '100vh',
-  },
-  panel: {
-    width: 500,
-    position: 'absolute',
-    left: 90,
-    top: 48,
-    height: 'calc(100vh - 48px)',
-  },
+	wrapper: {
+		width: 450,
+		position: 'absolute',
+		right: 20,
+		top: '5vh',
+		transform: 'rotateX(10deg) rotateY(10deg)',
+		height: 'calc(100vh - 200px)',
+		background: `${theme.palette.secondary.main}a4`,
+		borderRadius: '1vh',
+		overflow: 'hidden',
+	},
+	errorBtn: {
+		position: 'absolute',
+		top: '1vh',
+		right: '2.25vh',
+		color: 'white',
+		background: `${theme.palette.primary.main}a2`,
+		border: `2px solid ${theme.palette.primary.main}a2`,
+		borderRadius: '4px',
+		color: 'white',
+		'&:hover': {
+			background: `${theme.palette.primary.main}a2`,
+			filter: 'brightness(0.75)',
+		},
+		padding: '10px 12px',
+	},
+	importBtn: {
+		position: 'absolute',
+		top: '2vh',
+		left: '2.25vh',
+		color: 'white',
+		background: `${theme.palette.primary.main}a2`,
+		border: `2px solid ${theme.palette.primary.main}a2`,
+		borderRadius: '4px',
+		transform: 'rotateX(-5deg) rotateY(10deg)',
+		transition: 'filter ease-in 0.15s',
+		'& svg': {
+			marginLeft: 6,
+		},
+		'&:hover': {
+			background: `${theme.palette.primary.main}a2`,
+			filter: 'brightness(0.75)',
+		},
+		zIndex: 999
+	},
+	saveBtn: {
+		position: 'absolute',
+		bottom: '6vh',
+		right: '2.25vh',
+		color: 'white',
+		background: `${theme.palette.success.main}a2`,
+		border: `2px solid ${theme.palette.success.main}a2`,
+		borderRadius: '4px',
+		transform: 'rotateX(10deg) rotateY(10deg)',
+		transition: 'filter ease-in 0.15s',
+		'& svg': {
+			marginLeft: 6,
+		},
+		'&:hover': {
+			background: `${theme.palette.success.main}a2`,
+			filter: 'brightness(0.75)',
+		},
+	},
+	btnBar: {
+		position: 'relative',
+		background: `${theme.palette.secondary.light}a10`,
+		width: 450,
+		height: 'fit-content',
+		marginBottom: '.5vh'
+	},
+	panel: {
+		width: 450,
+		position: 'relative',
+		left: 0,
+		top: 0,
+		height: 'calc(100vh - 240px)',
+		overflow: 'hidden'
+	},
 }));
 
 export default (props) => {
-  const classes = useStyles();
-  const dispatch = useDispatch();
-  const camera = useSelector((state) => state.app.camera);
-  const state = useSelector((state) => state.app.state);
-  const cost = useSelector((state) => state.app.pricing.SHOP);
+	const classes = useStyles();
+	const dispatch = useDispatch();
+	const state = useSelector((state) => state.app.state);
+	const cost = useSelector((state) => state.app.pricing.SHOP);
 
-  const [cancelling, setCancelling] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [value, setValue] = useState(0);
-  const [importCode, setImportCode] = useState('');
-  const [outfitName, setOutfitName] = useState('');
+	const [cancelling, setCancelling] = useState(false);
+	const [saving, setSaving] = useState(false);
+	const [value, setValue] = useState(0);
+	const [importCode, setImportCode] = useState('');
+	const [outfitName, setOutfitName] = useState('');
 
-  const handleChange = (event, newValue) => {
-    setValue(newValue);
-  };
+	const handleChange = (event, newValue) => {
+		setValue(newValue);
+	};
 
-  const onCamChange = async (e, newValue) => {
-    try {
-      let res = await (await Nui.send('ChangeCamera', newValue)).json();
+	const onCancel = () => {
+		setCancelling(false);
+		dispatch(CancelEdits());
+	};
 
-      if (res) {
-        dispatch({
-          type: 'SET_CAM',
-          payload: {
-            cam: newValue,
-          },
-        });
-      }
-    } catch (err) {}
-  };
+	const onSave = () => {
+		setSaving(false);
+		dispatch(SavePed(state));
+	};
 
-  const onCancel = () => {
-    setCancelling(false);
-    dispatch(CancelEdits());
-  };
+	const handleImport = () => {
+	  setImportCode('');
+	  setOpenImportDialog(true);
+	};
+  
+	const handleImportDialogClose = () => {
+	  setOpenImportDialog(false);
+	};
+  
+	const handleImportCodeChange = (event) => {
+	  setImportCode(event.target.value);
+	};
+  
+	const handleOutfitNameChange = (event) => {
+	  setOutfitName(event.target.value);
+	};
+  
+	const handleImportConfirm = () => {
+	  setOpenImportDialog(false);
+	  dispatch(SaveImport(outfitName, importCode));
+	};
+  
+	const [openImportDialog, setOpenImportDialog] = useState(false);
 
-  const onSave = () => {
-    setSaving(false);
-    dispatch(SavePed(state));
-  };
+	return (
+		<div>
+			<div className={classes.wrapper}>
+				<div className={classes.btnBar}>
+					<Tabs
+						centered
+						style={{ width: '100%' }}
+						value={value}
+						onChange={handleChange}
+						indicatorColor="primary"
+						textColor="primary"
+						variant="fullWidth"
+					>
+						<Tab label="Clothing" icon={ <FontAwesomeIcon icon={['fas', 'shirt']} /> } />
+						<Tab label="Accessories" icon={<FontAwesomeIcon icon={['fas', 'mitten']} />} />
+					</Tabs>
+				</div>
+				<div className={classes.panel}>
+					<TabPanel value={value} index={0}>
+						<Clothes arms/>
+					</TabPanel>
+					<TabPanel value={value} index={1}>
+						<Accessories />
+					</TabPanel>
+				</div>
+			</div>
 
-  const handleImport = () => {
-    setImportCode('');
-    setOpenImportDialog(true);
-  };
+			<Naked />
+			
+			<Button onClick={() => setCancelling(true)} className={classes.errorBtn}>
+				<FontAwesomeIcon icon={['fas', 'x']} />
+			</Button>
+			
+			<Button size='large' onClick={handleImport} className={classes.importBtn}>
+				Import Outfit
+				<FontAwesomeIcon icon={['fas', 'file-import']} />
+			</Button>
+			
+			<Button size='large' onClick={() => setSaving(true)} className={classes.saveBtn}>
+				Save Everything
+				<FontAwesomeIcon icon={['fas', 'floppy-disk']} />
+			</Button>
 
-  const handleCancelImport = () => {
-    setOpenImportDialog(false);
-    setCancelling(true);
-  };
+			<Dialog
+				open={openImportDialog}
+				onClose={handleImportDialogClose}
+				title="Import Code"
+				onAccept={handleImportConfirm}
+				onDecline={handleImportDialogClose}
+				acceptText="Import"
+				declineText="Cancel"
+			>
+				<TextField
+					autoFocus
+					required
+					margin="dense"
+					id="outfit-name"
+					label="Input Outfit Name"
+					type="text"
+					fullWidth
+					value={outfitName}
+					onChange={handleOutfitNameChange}
+				/>
+				<TextField
+					required
+					margin="dense"
+					id="import-code"
+					label="Input Outfit Code"
+					type="text"
+					fullWidth
+					value={importCode}
+					onChange={handleImportCodeChange}
+				/>
+			</Dialog>
 
-  const handleImportDialogClose = () => {
-    setOpenImportDialog(false);
-  };
-
-  const handleImportCodeChange = (event) => {
-    setImportCode(event.target.value);
-  };
-
-  const handleOutfitNameChange = (event) => {
-    setOutfitName(event.target.value);
-  };
-
-  const handleImportConfirm = () => {
-    setOpenImportDialog(false);
-    dispatch(SaveImport(outfitName, importCode));
-  };
-
-  const [openImportDialog, setOpenImportDialog] = useState(false);
-
-  return (
-    <div>
-      <div className={classes.camBar}>
-        <Tabs
-          centered
-          style={{ height: '100%' }}
-          value={camera}
-          onChange={onCamChange}
-          indicatorColor="primary"
-          textColor="primary"
-        >
-          <Tab
-            label={<FontAwesomeIcon icon={['fas', 'person']} />}
-          />
-          <Tab
-            label={<FontAwesomeIcon icon={['fas', 'face-smile']} />}
-          />
-          <Tab
-            label={<FontAwesomeIcon icon={['fas', 'shirt']} />}
-          />
-          <Tab label={<FontAwesomeIcon icon={['fas', 'shoe-prints']} />} />
-        </Tabs>
-      </div>
-      <div className={classes.btnBar}>
-        <Tabs
-          orientation="vertical"
-          style={{ height: '100%' }}
-          value={value}
-          onChange={handleChange}
-          indicatorColor="primary"
-          textColor="primary"
-          variant="scrollable"
-        >
-          <Tab
-            label={<FontAwesomeIcon icon={['fas', 'shirt']} />}
-          />
-          <Tab label={<FontAwesomeIcon icon={['fas', 'hat-cowboy-side']} />} />
-          <Tab label={<FontAwesomeIcon icon={['fas', 'mitten']} />} />
-        </Tabs>
-      </div>
-      <div className={classes.panel}>
-        <TabPanel value={value} index={0}>
-          <Clothes />
-        </TabPanel>
-        <TabPanel value={value} index={1}>
-          <Accessories />
-        </TabPanel>
-        <TabPanel value={value} index={2}>
-          <Body armsOnly />
-        </TabPanel>
-      </div>
-
-      <Naked />
-      <ButtonGroup variant="contained" className={classes.save}>
-        <Button color="primary" onClick={handleImport}>
-          Import
-          <FontAwesomeIcon icon={['fas', 'file-import']} />
-        </Button>
-        <Button color="error" onClick={() => setCancelling(true)}>
-          Cancel
-          <FontAwesomeIcon icon={['fas', 'x']} />
-        </Button>
-        <Button color="success" onClick={() => setSaving(true)}>
-          Save
-          <FontAwesomeIcon icon={['fas', 'save']} />
-        </Button>
-      </ButtonGroup>
-
-      <Dialog
-        open={openImportDialog}
-        onClose={handleImportDialogClose}
-        title="Import Code"
-        onAccept={handleImportConfirm}
-		    onDecline={handleImportDialogClose}
-        acceptText="Import"
-        declineText="Cancel"
-      >
-        <TextField
-          autoFocus
-          margin="dense"
-          id="outfit-name"
-          label="Input Outfit Name"
-          type="text"
-          fullWidth
-          value={outfitName}
-          onChange={handleOutfitNameChange}
-        />
-        <TextField
-          autoFocus
-          margin="dense"
-          id="import-code"
-          label="Input Outfit Code"
-          type="text"
-          fullWidth
-          value={importCode}
-          onChange={handleImportCodeChange}
-        />
-      </Dialog>
-
-      <Dialog
-        title="Cancel?"
-        open={cancelling}
-        onAccept={onCancel}
-        onDecline={() => setCancelling(false)}
-        acceptLang="Yes"
-        declineLang="No"
-      >
-        <p>
-          All changes will be discarded, are you sure you want to
-          continue?
-        </p>
-      </Dialog>
-      <Dialog
-        title="Save Outfit?"
-        open={saving}
-        onAccept={onSave}
-        onDecline={() => setSaving(false)}
-      >
-        <p>
-          You will be charged{' '}
-          <span className={classes.highlight}>
-            {CurrencyFormat.format(cost)}
-          </span>
-          ?
-        </p>
-        <p>Are you sure you want to save?</p>
-      </Dialog>
-    </div>
-  );
+			<Dialog
+				title="Cancel?"
+				open={cancelling}
+				onAccept={onCancel}
+				onDecline={() => setCancelling(false)}
+				acceptLang="Yes"
+				declineLang="No"
+			>
+				<p>
+					All changes will be discarded, are you sure you want to
+					continue?
+				</p>
+			</Dialog>
+			<Dialog
+				title="Save Outfit?"
+				open={saving}
+				onAccept={onSave}
+				onDecline={() => setSaving(false)}
+			>
+				<p>
+					You will be charged{' '}
+					<span className={classes.highlight}>
+						{CurrencyFormat.format(cost)}
+					</span>
+					?
+				</p>
+				<p>Are you sure you want to save?</p>
+			</Dialog>
+		</div>
+	);
 };

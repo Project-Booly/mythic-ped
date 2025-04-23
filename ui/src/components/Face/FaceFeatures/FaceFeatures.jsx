@@ -11,6 +11,7 @@ export default (props) => {
 			<EyeColor
 				label={'Eye Color'}
 				component={ped.customization.eyeColor}
+				collapsible={true}
 			/>
 			<FaceFeature
 				label={'Nose'}

@@ -1,3 +1,4 @@
+local isSpotlightActive = false
 Camera = {}
 
 Camera.entity = nil
@@ -6,7 +7,7 @@ Camera.currentView = "standard"
 Camera.active = false
 Camera.updateRot = false
 Camera.updateZoom = false
-Camera.radius = 1.8
+Camera.radius = 1.25
 Camera.angleX = 30.0
 Camera.angleY = 0.0
 Camera.mouseX = 0
@@ -49,6 +50,7 @@ Camera.Deactivate = function()
 	FreezePedCameraRotation(playerPed, false)
 	FreezeEntityPosition(playerPed, false)
 	Camera.active = false
+	isSpotlightActive = false
 end
 
 Camera.SetView = function(view)
@@ -166,38 +168,6 @@ Camera.CalculatePosition = function(adjustedAngle)
 	return vector3(pedCoords.x + offsetX, pedCoords.y + offsetY, pedCoords.z + offsetZ)
 end
 
-Camera.Drag = function(x, y)
-    Camera.angleX = Camera.angleX - x * 0.1
-    Camera.angleY = Camera.angleY + y * 0.1
-
-    -- Clamp angleY to avoid camera flipping
-    if Camera.angleY > Camera.angleYMax then
-        Camera.angleY = Camera.angleYMax
-    elseif Camera.angleY < Camera.angleYMin then
-        Camera.angleY = Camera.angleYMin
-    end
-
-    -- Update camera position
-    Camera.updateZoom = true
-end
-
-Camera.Zoom = function(zoom)
-	Camera.radius = zoom == "forward" and Camera.radius + 0.05 or Camera.radius - 0.05 
-    Camera.updateZoom = true
-end
-
-RegisterNUICallback('DragCamera', function(data, cb)
-	local x = data.x
-	local y = data.y
-    Camera.Drag(x, y)
-	cb("ok")
-end)
-
-RegisterNUICallback('ZoomCamera', function(zoom, cb)
-    Camera.Zoom(zoom)
-	cb("ok")
-end)
-
 CreateThread(function()
 	while true do
 		if Camera.active or FROZEN then
@@ -240,4 +210,66 @@ CreateThread(function()
 
 		Wait(0)
 	end
+end)
+
+Camera.Drag = function(deltaX, deltaY)
+    Camera.angleX = Camera.angleX - deltaX * 0.1
+    Camera.angleY = Camera.angleY + deltaY * 0.1
+
+    if Camera.angleY > Camera.angleYMax then
+        Camera.angleY = Camera.angleYMax
+    elseif Camera.angleY < Camera.angleYMin then
+        Camera.angleY = Camera.angleYMin
+    end
+
+    Camera.updateZoom = true
+end
+
+Camera.Zoom = function(zoomDelta)
+    Camera.radius = Camera.radius + zoomDelta
+
+    if Camera.radius < Camera.radiusMin then
+        Camera.radius = Camera.radiusMin
+    elseif Camera.radius > Camera.radiusMax then
+        Camera.radius = Camera.radiusMax
+    end
+    Camera.updateZoom = true
+end
+
+RegisterNUICallback('DragCamera', function(dragData, cb)
+	local deltaX = dragData.deltaX
+	local deltaY = dragData.deltaY
+
+    Camera.Drag(deltaX, deltaY)
+	cb("ok")
+end)
+
+RegisterNUICallback('ZoomCamera', function(zoomDelta, cb)
+    Camera.Zoom(zoomDelta)
+	cb("ok")
+end)
+
+local function getSpotlight()
+    while isSpotlightActive do
+        local coords = GetEntityCoords(cache.ped)
+        local forward = GetEntityForwardVector(cache.ped)
+        DrawSpotLight(coords.x + forward.x, coords.y + forward.y, coords.z + 3.0, 0.0, 90.0, -180.0, 255, 255, 255, 5.0, 1.0, 1.0, 100.0, 1.0)
+        Wait(0)
+    end
+end
+
+local function toggleSpotlight()
+    if not isSpotlightActive then
+        isSpotlightActive = true
+        CreateThread(getSpotlight)
+        return
+    else
+        isSpotlightActive = false
+        return
+    end
+end
+
+RegisterNUICallback('ToggleSpotlight', function(data, cb)
+    cb("ok")
+	toggleSpotlight()
 end)

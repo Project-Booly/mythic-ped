@@ -23,6 +23,7 @@ export default connect()((props) => {
 				name={'accessory'}
 			/>
 			<Component
+				title={'Decals'}
 				label={'Badges'}
 				component={ped.customization.components.badge}
 				name={'badge'}

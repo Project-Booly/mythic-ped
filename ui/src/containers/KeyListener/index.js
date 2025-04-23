@@ -38,6 +38,10 @@ const CameraControls = ({ isDisabled, children }) => {
         } else if (event.keyCode === 69) {
             rotate('Right');
         }
+
+        if (event.keyCode === 71) { // G === spotlight
+            Nui.send('ToggleSpotlight');
+        }
     };
 
     const handleUp = (event) => {
@@ -51,7 +55,8 @@ const CameraControls = ({ isDisabled, children }) => {
     const handleScroll = (event) => {
         checkIfInsideCustomDiv(event);
         if (isDisabled || !insideCustomDiv) return;
-        Nui.send('ZoomCamera', event.deltaY > 0 ? 'forward' : 'back');
+
+        Nui.send('ZoomCamera', event.deltaY / 1000);
     };
 
     const handleMouseDown = (event) => {
@@ -77,8 +82,8 @@ const CameraControls = ({ isDisabled, children }) => {
         const deltaY = event.clientY - lastMousePosition.y;
 
         Nui.send('DragCamera', {
-            x: deltaX / 1,
-            y: deltaY / 1,
+            deltaX: deltaX / 1,
+            deltaY: deltaY / 1,
         });
 
         setLastMousePosition({ x: event.clientX, y: event.clientY });
@@ -122,10 +127,10 @@ const CameraControls = ({ isDisabled, children }) => {
                 ref={customDivRef}
                 style={{
                     position: 'absolute',
-                    top: 48,
-                    left: moveOverBwo ? 500 : 590,
+                    top: 0,
+                    right: 480,
                     width: '100%',
-                    height: '90vh',
+                    height: '94.5vh',
                     background: 'rgba(0, 0, 0, 0)',
                     zIndex: 0,
                     cursor: 'grab',

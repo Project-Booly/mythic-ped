@@ -7,7 +7,7 @@ import { Checkbox, Slider, Ticker } from '../../UIComponents';
 import { connect, useDispatch } from 'react-redux';
 import ElementBox from '../../UIComponents/ElementBox/ElementBox';
 import { Tattoos } from '../../Tattoos/Data';
-import { Button, IconButton } from '@mui/material';
+import { Button, IconButton, Tooltip } from '@mui/material';
 
 const useStyles = makeStyles((theme) => ({
 	body: {
@@ -20,6 +20,7 @@ const useStyles = makeStyles((theme) => ({
 		justifyContent: 'space-around',
 		background: theme.palette.secondary.light,
 		border: `2px solid ${theme.palette.border.divider}`,
+		userSelect: 'none',
 	},
 	btnWrapper: {
 		position: 'relative',
@@ -33,6 +34,10 @@ const useStyles = makeStyles((theme) => ({
 		left: 0,
 		right: 0,
 		margin: 'auto',
+		'&:hover': {
+			background: 'none !important',
+			color: 'red !important'
+		}
 	},
 	add: {
 		marginTop: 0,
@@ -121,12 +126,14 @@ export default connect()((props) => {
 								max={tattoos.length - 1}
 							/>
 							<div style={{ position: 'relative' }}>
-								<IconButton
-									className={classes.del}
-									onClick={() => onDelete(k)}
-								>
-									<FontAwesomeIcon icon={['fas', 'trash']} />
-								</IconButton>
+								<Tooltip title="Remove Tattoo">
+									<IconButton
+										className={classes.del}
+										onClick={() => onDelete(k)}
+									>
+										<FontAwesomeIcon icon={['fas', 'trash-can']} />
+									</IconButton>
+								</Tooltip>
 							</div>
 						</ElementBox>
 					);

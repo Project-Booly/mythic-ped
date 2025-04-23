@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { connect, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import Wrapper from '../UIComponents/Wrapper/Wrapper';
 import Component from '../PedComponents/Component/Component';
 
-export default connect()(props => {
+export default ({ arms }) => {
 	const ped = useSelector(state => state.app.ped);
 
 	return (
@@ -18,6 +18,13 @@ export default connect()(props => {
 				component={ped.customization.components.undershirt}
 				name={'undershirt'}
 			/>
+			{arms && (				
+				<Component
+					label={'Arms'}
+					component={ped.customization.components.torso}
+					name={'torso'}
+				/>
+			)}
 			<Component
 				label={'Vest'}
 				component={ped.customization.components.kevlar}
@@ -35,4 +42,4 @@ export default connect()(props => {
 			/>
 		</Wrapper>
 	);
-});
+};

@@ -43,11 +43,36 @@ function RegisterChatCommands()
 	end, {
 		help = "Test Notification",
 	})
-	Chat:RegisterAdminCommand("clearprops", function(source, args, rawCommand)
+
+	Chat:RegisterCommand("clearprops", function(source, args, rawCommand)
 		TriggerClientEvent("Ped:Client:Clearprops", source)
-	  end, {
+	end, {
 		help = "Removes all the props attached to the entity",
-	  })
+	})
+
+	Chat:RegisterAdminCommand("pedmenu", function(source, args, rawCommand)
+		local targetSID
+		local target = args[1]
+
+		if target == "me" then
+			targetSID = Fetch:Source(source):GetData("Character"):GetData("SID")
+		else
+			targetSID = tonumber(args[1])
+		end
+		local player = Fetch:SID(targetSID)
+
+		if not player then return end
+
+		TriggerClientEvent("Ped:Client:OpenClothing", player:GetData("Source"))
+	end, {
+		help = "(Gov) open pedmenu",
+		params = {
+			{
+				name = "Target",
+				help = "State ID",
+			},
+		},
+	}, 1)
 end
 
 function RegisterWardrobeMiddleware()
@@ -66,7 +91,7 @@ function RegisterWardrobeCallbacks()
 
 		local wr = {}
 
-		for k, v in ipairs(wardrobe) do
+		for _, v in ipairs(wardrobe) do
 			table.insert(wr, {
 				label = v.label,
 			})
@@ -115,6 +140,62 @@ function RegisterWardrobeCallbacks()
 		end
 	end)
 
+	Callbacks:RegisterServerCallback("Wardrobe:Rename", function(source, data, cb)
+		local player = exports["mythic-base"]:FetchComponent("Fetch"):Source(source)
+		local char = player:GetData("Character")
+		if char ~= nil then
+			local ped = char:GetData("Ped")
+			local wardrobe = char:GetData("Wardrobe") or {}
+			if wardrobe[data.index] ~= nil then
+				wardrobe[data.index].label = data.name
+				char:SetData("Wardrobe", wardrobe)
+				cb(true)
+			else
+				cb(false)
+			end
+		else
+			cb(false)
+		end
+	end)
+
+	Callbacks:RegisterServerCallback("Wardrobe:MoveUp", function(source, _data, cb)
+		local player = exports["mythic-base"]:FetchComponent("Fetch"):Source(source)
+		local char = player:GetData("Character")
+		local data = _data
+		if char ~= nil then
+			local ped = char:GetData("Ped")
+			local wardrobe = char:GetData("Wardrobe") or {}
+			if wardrobe[data.index] ~= nil then
+				-- Move up
+				char:SetData("Wardrobe", moveItem(wardrobe, data.index, true))
+				cb(true)
+			else
+				cb(false)
+			end
+		else
+			cb(false)
+		end
+	end)
+
+	Callbacks:RegisterServerCallback("Wardrobe:MoveDown", function(source, _data, cb)
+		local player = exports["mythic-base"]:FetchComponent("Fetch"):Source(source)
+		local char = player:GetData("Character")
+		local data = _data
+		if char ~= nil then
+			local ped = char:GetData("Ped")
+			local wardrobe = char:GetData("Wardrobe") or {}
+			if wardrobe[data.index] ~= nil then
+				-- Move Down
+				char:SetData("Wardrobe", moveItem(wardrobe, data.index, false))
+				cb(true)
+			else
+				cb(false)
+			end
+		else
+			cb(false)
+		end
+	end)
+
 	Callbacks:RegisterServerCallback("Wardrobe:Equip", function(source, data, cb)
 		local player = exports["mythic-base"]:FetchComponent("Fetch"):Source(source)
 		local char = player:GetData("Character")
@@ -123,6 +204,63 @@ function RegisterWardrobeCallbacks()
 			if outfit ~= nil then
 				Ped:ApplyOutfit(source, outfit)
 				cb(true)
+			else
+				cb(false)
+			end
+		else
+			cb(false)
+		end
+	end)
+
+	Callbacks:RegisterServerCallback("Wardrobe:Share", function(source, data, cb)
+		local player = exports["mythic-base"]:FetchComponent("Fetch"):Source(source)
+		local char = player:GetData("Character")
+		if char ~= nil then
+			local outfit = char:GetData("Wardrobe")[tonumber(data)]
+			if outfit ~= nil then
+				local myPed = GetPlayerPed(source)
+				local myCoords = GetEntityCoords(myPed)
+				local myBucket = GetPlayerRoutingBucket(source)
+				for k, v in pairs(Fetch:All()) do
+					local tSource = v:GetData("Source")
+					local tPed = GetPlayerPed(tSource)
+					local coords = GetEntityCoords(tPed)
+					if tSource ~= source and #(myCoords - coords) <= 5.0 and GetPlayerRoutingBucket(tSource) == myBucket then
+						Callbacks:ClientCallback(tSource, "Wardrobe:Sharing:Begin", {
+							label = outfit?.label,
+							components = outfit?.data?.components,
+							props = outfit?.data?.props
+						}, function(acceptedOutfit)
+							if acceptedOutfit then
+								local tChar = v:GetData("Character")
+								if tChar ~= nil then
+									local ped = tChar:GetData("Ped")
+									local wardrobe = tChar:GetData("Wardrobe") or {}
+
+									local newOutfit = {
+										label = outfit?.label,
+										data = ped.customization,
+									}
+
+									if outfit.data.components then
+										local originalHair = newOutfit.data.components.hair
+										newOutfit.data.components = outfit.data.components
+										newOutfit.data.components.hair = originalHair -- This is used so our characters hair isn't overidden by the outfit hair
+									end
+
+									if outfit?.data?.props then
+										newOutfit.data.props = outfit.data.props
+									end
+
+									table.insert(wardrobe, newOutfit)
+									tChar:SetData("Wardrobe", wardrobe)
+								end
+							end
+						end)
+
+						cb(true)
+					end
+				end
 			else
 				cb(false)
 			end
@@ -160,7 +298,7 @@ function RegisterWardrobeCallbacks()
 	Callbacks:RegisterServerCallback("Wardrobe:ExportClothing", function(source, data, cb)
 		local generatedCode = GenerateClothingCode()
 		local result = MySQL.insert.await(
-			"INSERT INTO outfit_codes (Code, Label, Data) VALUES(?, ?, ?)",
+			"INSERT INTO exported_clothes (Code, Label, Data) VALUES(?, ?, ?)",
 			{
 				generatedCode,
 				data.label,
@@ -174,9 +312,8 @@ function RegisterWardrobeCallbacks()
 		end
 	end)
 
-
 	Callbacks:RegisterServerCallback("Wardrobe:GetExportClothingByCode", function(source, code, cb)
-		local result = MySQL.query.await('SELECT Data FROM outfit_codes WHERE Code = ?', {
+		local result = MySQL.query.await('SELECT Data FROM exported_clothes WHERE Code = ?', {
 			tostring(code),
 		})
 
@@ -191,20 +328,31 @@ function RegisterWardrobeCallbacks()
 		end
 	end)
 
-
 	Callbacks:RegisterServerCallback("Wardrobe:SaveFromExportedOutfit", function(source, cData, cb)
 		local player = exports["mythic-base"]:FetchComponent("Fetch"):Source(source)
 		local char = player:GetData("Character")
 
 		if char ~= nil then
+			local ped = char:GetData("Ped")
 			local wardrobe = char:GetData("Wardrobe") or {}
+			local outfit = json.decode(cData.outfitdata)
 
-
-			local outfit = {
-				label = cData.label,
-				data = json.decode(cData.outfitdata),
+			local newOutfit = {
+				label = cData?.label,
+				data = ped.customization,
 			}
-			table.insert(wardrobe, outfit)
+
+			if outfit?.components then
+				local originalHair = newOutfit.data.components.hair
+				newOutfit.data.components = outfit.components
+				newOutfit.data.components.hair = originalHair -- This is used so our characters hair isn't overidden by the outfit hair
+			end
+
+			if outfit?.props then
+				newOutfit.data.props = outfit.props
+			end
+
+			table.insert(wardrobe, newOutfit)
 			char:SetData("Wardrobe", wardrobe)
 			cb(true)
 		else
@@ -213,11 +361,30 @@ function RegisterWardrobeCallbacks()
 	end)
 end
 
+function moveItem(tables, oldindex, up) -- Well this looks like ass lmfao
+	local function swap(_tables, new)
+		_tables[oldindex], _tables[new] = _tables[new], _tables[oldindex]
+		return _tables
+	end
+	if up then
+		if oldindex == 1 then
+			return tables; -- Already at top, ignore.
+		else
+			return swap(tables, oldindex-1) -- Move up.
+		end
+	else
+		if oldindex ~= #tables then
+			return swap(tables, oldindex+1) -- Move down.
+		else
+			return tables; -- Already at bottom, ignore.
+		end
+	end
+end
 
 function GenerateClothingCode()
     local UniqueFound = false
     local SerialNumber = nil
-	local firstStringPart = "clothing-"
+	local firstStringPart = "outfits-"
     while not UniqueFound do
         SerialNumber = firstStringPart..math.random(11111111, 99999999)
         local query = '%' .. SerialNumber .. '%'

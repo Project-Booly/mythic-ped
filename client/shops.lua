@@ -113,3 +113,53 @@ AddEventHandler('Keybinds:Client:KeyUp:secondary_action', function()
         Wardrobe:Show()
     end
 end)
+
+RegisterNetEvent('Ped:Client:BanPlayer')
+AddEventHandler('Ped:Client:BanPlayer', function(data)
+    if not data.type then return end
+    Ped.Customization:Show(data.type, { x = x, y = y, z = z, h = GetEntityHeading(playerPed), }, true)
+end)
+
+RegisterNetEvent('Ped:Client:OpenClothing', function()
+    local playerPed = PlayerPedId()
+    local x, y, z = table.unpack(GetEntityCoords(playerPed))
+
+    local menuItems = {
+        {
+            label = 'Surgery',
+            description = 'View Surgery Menu',
+            event = 'Ped:Client:BanPlayer',
+            data = { type = 'SURGERY' }
+        },
+        {
+            label = 'Store',
+            description = 'View Clothing Store',
+            event = 'Ped:Client:BanPlayer',
+            data = { type = 'SHOP' }
+        },
+        {
+            label = 'Barber',
+            description = 'View Barber Store',
+            event = 'Ped:Client:BanPlayer',
+            data = { type = 'BARBER' }
+        },
+        {
+            label = 'Tattoo\'s',
+            description = 'View Tattoo Store',
+            event = 'Ped:Client:BanPlayer',
+            data = { type = 'TATTOO' }
+        },
+        {
+            label = 'Wardrobe',
+            description = 'View my saved outfits',
+            event = 'Wardrobe:Client:ShowBitch'
+        },
+    }
+
+    ListMenu:Show({
+        main = {
+            label = "Ped Menu",
+            items = menuItems,
+        },
+    })
+end)

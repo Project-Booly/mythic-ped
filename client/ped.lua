@@ -3,6 +3,7 @@ _currentState = nil
 _data = nil
 _playingIdle = false
 FROZEN = false
+_usingAdmin = false
 
 _camOffsets = {
 	[0] = "standard",
@@ -140,6 +141,36 @@ function RegisterInteraction()
 							LocalPed.customization.props.glass.textureId
 						)
 					end)
+					Interaction:Hide()
+				end,
+			},
+			{
+				icon = "bag",
+				label = "Toggle Bag",
+				shouldShow = function()
+					if LocalPed.customization.components.bag and LocalPed.customization.components.bag.drawableId ~= 0 then
+						return true
+					end
+
+					return false
+				end,
+				action = function()
+					Callbacks:ServerCallback("Ped:RemoveBag")
+					Interaction:Hide()
+				end,
+			},
+			{
+				icon = "vest",
+				label = "Toggle Vest",
+				shouldShow = function()
+					if LocalPed.customization.components.kevlar and LocalPed.customization.components.kevlar.drawableId ~= 0 then
+						return true
+					end
+
+					return false
+				end,
+				action = function()
+					Callbacks:ServerCallback("Ped:RemoveVest")
 					Interaction:Hide()
 				end,
 			},
@@ -798,7 +829,7 @@ PED = {
 			SetPlayerModel(PlayerId(), model)
 			player = PlayerPedId()
 			SetEntityMaxHealth(player, 200)
-			SetEntityHealth(player, GetEntityMaxHealth(player))
+			SetEntityHealth(player, 200--[[GetEntityMaxHealth(player)]])
 			FreezePedCameraRotation(player, true)
 			SetPedDefaultComponentVariation(player)
 			SetEntityAsMissionEntity(player, true, true)
@@ -848,9 +879,10 @@ PED = {
 		end,
 	},
 	Customization = {
-		Show = function(self, type, data)
+		Show = function(self, type, data, usingAdmin)
 			FROZEN = true
 			local player = PlayerPedId()
+			_usingAdmin = usingAdmin or false
 
 			LocalPed = LocalPlayer.state.Character:GetData("Ped")
 			Ped:ApplyToPed(LocalPed)
@@ -881,30 +913,50 @@ PED = {
 		end,
 		Save = function(self, cb)
 			FROZEN = false
-			Callbacks:ServerCallback("Ped:MakePayment", {
-				type = _currentState,
-			}, function(status, paid)
-				if status then
-					if LocalPlayer.state.isNaked then
-						ToggleNekked(false)
-					end
-
-					Ped:ApplyToPed(LocalPed)
-					Callbacks:ServerCallback("Ped:SavePed", {
-						ped = LocalPed,
-					}, function(saved)
-						if _currentState == "CREATOR" then
-							Ped.Creator:End()
-						else
-							Ped.Customization:Hide()
-							Notification:Success(string.format("You Paid $%s", paid))
-						end
-					end)
-				else
-					Notification:Error("You Don't Have Enough Cash")
+			if _usingAdmin then
+				_usingAdmin = false
+				if LocalPlayer.state.isNaked then
+					ToggleNekked(false)
 				end
-				cb(status)
-			end)
+
+				Ped:ApplyToPed(LocalPed)
+				Callbacks:ServerCallback("Ped:SavePed", {
+					ped = LocalPed,
+				}, function(saved)
+					if _currentState == "CREATOR" then
+						Ped.Creator:End()
+					else
+						Ped.Customization:Hide()
+						Notification:Success(string.format("You Paid $%s, free is best", 0))
+					end
+				end)
+				cb(true)
+			else
+				Callbacks:ServerCallback("Ped:MakePayment", {
+					type = _currentState,
+				}, function(status, paid)
+					if status then
+						if LocalPlayer.state.isNaked then
+							ToggleNekked(false)
+						end
+
+						Ped:ApplyToPed(LocalPed)
+						Callbacks:ServerCallback("Ped:SavePed", {
+							ped = LocalPed,
+						}, function(saved)
+							if _currentState == "CREATOR" then
+								Ped.Creator:End()
+							else
+								Ped.Customization:Hide()
+								Notification:Success(string.format("You Paid $%s", paid))
+							end
+						end)
+					else
+						Notification:Error("You Don't Have Enough Cash")
+					end
+					cb(status)
+				end)
+			end
 		end,
 		Cancel = function(self)
 			if LocalPlayer.state.isNaked then
@@ -1014,6 +1066,20 @@ RegisterNetEvent("Ped:Client:HatGlassAnim", function()
 	loadAnimDict("mp_masks@on_foot")
 	TaskPlayAnim(LocalPlayer.state.ped, "mp_masks@on_foot", "put_on_mask", 4.0, 3.0, -1, 49, 1.0, 0, 0, 0)
 	Wait(500)
+	ClearPedTasks(LocalPlayer.state.ped)
+end)
+
+RegisterNetEvent("Ped:Client:VestAnim", function()
+	loadAnimDict("skydive@parachute@")
+	TaskPlayAnim(LocalPlayer.state.ped, "skydive@parachute@", "chute_off", 3.0, 3.0, 1200, 48, 0.0, false, false, false)
+	Citizen.Wait(1200)
+	ClearPedTasks(LocalPlayer.state.ped)
+end)
+
+RegisterNetEvent("Ped:Client:GloveAnim", function()
+	loadAnimDict("missmic4")
+	TaskPlayAnim(LocalPlayer.state.ped, "missmic4", "michael_tux_fidget", 3.0, 3.0, 2500, 48, 0.0, false, false, false)
+	Citizen.Wait(2500)
 	ClearPedTasks(LocalPlayer.state.ped)
 end)
 

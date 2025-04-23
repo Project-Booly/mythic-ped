@@ -1,13 +1,10 @@
 import ElementBox from '../../UIComponents/ElementBox/ElementBox';
 import React, { useEffect, useState } from 'react';
 import { makeStyles } from '@mui/styles';
-import { connect, useDispatch, useSelector } from 'react-redux';
-
-import { Checkbox, Ticker } from '../../UIComponents';
-import { SetPed } from '../../../actions/pedActions';
+import { useDispatch, useSelector } from 'react-redux';
+import { Alert, MenuItem, Select } from '@mui/material';
 import Nui from '../../../util/Nui';
 import PedModels from './peds';
-import { Alert } from '@mui/material';
 
 const useStyles = makeStyles((theme) => ({
 	body: {
@@ -20,6 +17,8 @@ const useStyles = makeStyles((theme) => ({
 		justifyContent: 'space-around',
 		background: theme.palette.secondary.light,
 		border: `2px solid ${theme.palette.border.divider}`,
+		userSelect: 'none',
+		padding: 10
 	},
 }));
 
@@ -28,12 +27,12 @@ export default (props) => {
 	const dispatch = useDispatch();
 	const gender = useSelector((state) => state.app.gender);
 	const peds = PedModels[gender];
-	const curr =
-		peds.indexOf(props.model) == -1 ? 0 : peds.indexOf(props.model);
+	const curr = peds.indexOf(props.model) === -1 ? 0 : peds.indexOf(props.model);
 
 	const [disabled, setDisabled] = useState(false);
 
-	const onChange = async (v, d) => {
+	const onChange = async (event) => {
+		const v = event.target.value;
 		try {
 			setDisabled(true);
 			const payload = { value: peds[v] };
@@ -61,15 +60,19 @@ export default (props) => {
 				</Alert>
 			</ElementBox>
 			<ElementBox label={'Ped Model'} bodyClass={classes.body}>
-				<Ticker
-					label={'Model'}
-					data={{}}
-					current={curr}
-					min={0}
-					max={peds.length - 1}
+				<Select
+					labelId='ped-select-uwu'
+					id='ped-select-uwu'
+					value={curr}
 					disabled={disabled}
 					onChange={onChange}
-				/>
+				>
+					{peds.map((ped, index) => (
+						<MenuItem key={index} value={index}>
+							{ped}
+						</MenuItem>
+					))}
+				</Select>
 			</ElementBox>
 		</>
 	);

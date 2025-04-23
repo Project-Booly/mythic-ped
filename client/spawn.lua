@@ -1,5 +1,21 @@
 local cam = nil
 
+function wakeupAnimation()
+    local dict = "anim@scripted@heist@ig25_beach@male@"
+    RequestAnimDict(dict)
+    repeat Wait(0) until HasAnimDictLoaded(dict)
+
+    local ped = PlayerPedId()
+    local playerPos = GetEntityCoords(ped)
+    local playerHead = GetEntityHeading(ped)
+
+    local scene = NetworkCreateSynchronisedScene(playerPos.x, playerPos.y, playerPos.z-0.87, 0.0, 0.0, playerHead, 4, false, false, 8.0, 900.0, 1.0)
+    NetworkAddPedToSynchronisedScene(ped, scene, dict, "action", 900.0, 8.0, 0, 0, 900.0, 8192)
+    NetworkAddSynchronisedSceneCamera(scene, dict, "action_camera")
+
+    NetworkStartSynchronisedScene(scene)
+end
+
 AddEventHandler('Proxy:Shared:ExtendReady', function(component)
     if component == 'Spawn' then
         exports['mythic-base']:ExtendComponent(component, SPAWN)
@@ -18,6 +34,10 @@ SPAWN = {
             else
                 cb()
                 Spawn:PlacePedIntoWorld(data)
+                if data.spawn.id == 'LastLocation' and Config.wakeupAnimation then
+                    Citizen.Wait(500)
+                    wakeupAnimation()
+                end
             end
         end)
     end,

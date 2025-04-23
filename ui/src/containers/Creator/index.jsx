@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Tab, Tabs, IconButton, Button } from '@mui/material';
+import { Tab, Tabs, IconButton, Button, Tooltip,  } from '@mui/material';
 import { makeStyles } from '@mui/styles';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
@@ -18,41 +18,55 @@ import Wrapper from '../../components/UIComponents/Wrapper/Wrapper';
 import Nui from '../../util/Nui';
 
 const useStyles = makeStyles((theme) => ({
-	save: {
+	wrapper: {
+		width: 450,
 		position: 'absolute',
-		bottom: '1%',
-		right: '1%',
+		right: 20,
+		top: '5vh',
+		transform: 'rotateX(10deg) rotateY(10deg)',
+		height: 'calc(100vh - 200px)',
+		background: `${theme.palette.secondary.main}a4`,
+		borderRadius: '1vh',
+		overflow: 'hidden',
+	},
+	saveBtn: {
+		position: 'absolute',
+		bottom: '6vh',
+		right: '2.25vh',
+		color: 'white',
+		background: `${theme.palette.success.main}a2`,
+		border: `2px solid ${theme.palette.success.main}a2`,
+		borderRadius: '4px',
+		transform: 'rotateX(10deg) rotateY(10deg)',
 		transition: 'filter ease-in 0.15s',
 		'& svg': {
 			marginLeft: 6,
 		},
 		'&:hover': {
-			filter: 'brightness(0.7)',
+			background: `${theme.palette.success.main}a2`,
+			filter: 'brightness(0.75)',
 		},
 	},
-	camBar: {
-		background: theme.palette.secondary.dark,
-		height: 'fit-content',
-		width: '100vw',
-	},
 	btnBar: {
-		background: theme.palette.secondary.dark,
-		width: 'fit-content',
-		height: '100vh',
+		position: 'relative',
+		background: `${theme.palette.secondary.light}a10`,
+		width: 450,
+		height: 'fit-content',
+		marginBottom: '1vh'
 	},
 	panel: {
-		width: 500,
-		position: 'absolute',
-		left: 90,
-		top: 48,
-		height: 'calc(100vh - 48px)',
+		width: 450,
+		position: 'relative',
+		left: 0,
+		top: 0,
+		height: 'calc(100vh - 240px)',
+		overflow: 'hidden'
 	},
 }));
 
 export default (props) => {
 	const classes = useStyles();
 	const dispatch = useDispatch();
-	const camera = useSelector((state) => state.app.camera);
 	const state = useSelector((state) => state.app.state);
 
 	const [saving, setSaving] = useState(false);
@@ -62,21 +76,6 @@ export default (props) => {
 		setValue(newValue);
 	};
 
-	const onCamChange = async (e, newValue) => {
-		try {
-			let res = await (await Nui.send('ChangeCamera', newValue)).json();
-
-			if (res) {
-				dispatch({
-					type: 'SET_CAM',
-					payload: {
-						cam: newValue,
-					},
-				});
-			}
-		} catch (err) {}
-	};
-
 	const onSave = () => {
 		setSaving(false);
 		dispatch(SavePed(state));
@@ -84,96 +83,75 @@ export default (props) => {
 
 	return (
 		<div>
-			<div className={classes.camBar}>
-				<Tabs
-					centered
-					style={{ height: '100%' }}
-					value={camera}
-					onChange={onCamChange}
-					indicatorColor="primary"
-					textColor="primary"
-				>
-					<Tab
-						label={
-							<FontAwesomeIcon icon={['fas', 'face-grimace']} />
-						}
-					/>
-					<Tab
-						label={<FontAwesomeIcon icon={['fas', 'head-side-mask']} />}
-					/>
-					<Tab
-						label={
-							<FontAwesomeIcon icon={['fas', 'child-reaching']} />
-						}
-					/>
-					<Tab label={<FontAwesomeIcon icon={['fas', 'person']} />} />
-				</Tabs>
-			</div>
-			<div className={classes.btnBar}>
-				<Tabs
-					orientation="vertical"
-					style={{ height: '100%' }}
-					value={value}
-					onChange={handleChange}
-					indicatorColor="primary"
-					textColor="primary"
-					variant="scrollable"
-				>
-					<Tab
-						label={
-							<FontAwesomeIcon icon={['fas', 'face-grimace']} />
-						}
-					/>
-					<Tab
-						label={
-							<FontAwesomeIcon icon={['fas', 'child-reaching']} />
-						}
-					/>
-					<Tab
-						label={<FontAwesomeIcon icon={['fas', 'scissors']} />}
-					/>
-					<Tab
-						label={<FontAwesomeIcon icon={['fas', 'teeth-open']} />}
-					/>
-					<Tab label={<FontAwesomeIcon icon={['fas', 'shirt']} />} />
-					<Tab label={<FontAwesomeIcon icon={['fas', 'mitten']} />} />
-					<Tab label={<FontAwesomeIcon icon={['fas', 'atom']} />} />
-				</Tabs>
-			</div>
-			<div className={classes.panel}>
-				<TabPanel value={value} index={0}>
-					<Face />
-				</TabPanel>
-				<TabPanel value={value} index={1}>
-					<Body />
-				</TabPanel>
-				<TabPanel value={value} index={2}>
-					<Hair />
-				</TabPanel>
-				<TabPanel value={value} index={3}>
-					<Wrapper>
-						<FaceMakeup />
-					</Wrapper>
-				</TabPanel>
-				<TabPanel value={value} index={4}>
-					<Clothes />
-				</TabPanel>
-				<TabPanel value={value} index={5}>
-					<Accessories />
-				</TabPanel>
-				<TabPanel value={value} index={6}>
-					<Tattoo />
-				</TabPanel>
+			<div className={classes.wrapper}>
+				<div className={classes.btnBar}>
+					<Tabs
+						centered
+						style={{ width: '100%' }}
+						value={value}
+						onChange={handleChange}
+						indicatorColor="primary"
+						textColor="primary"
+						variant="scrollable"
+					>
+						<Tooltip title="Face" placement='bottom'>
+							<Tab label={ <FontAwesomeIcon icon={['fas', 'face-grimace']} /> } />
+						</Tooltip>
+						<Tooltip title="Body/Ped" placement='bottom'>
+							<Tab label={ <FontAwesomeIcon icon={['fas', 'child-reaching']} /> } />
+						</Tooltip>
+						<Tooltip title="Hair Styles" placement='bottom'>
+							<Tab label={<FontAwesomeIcon icon={['fas', 'scissors']} />} />
+						</Tooltip>
+						<Tooltip title="Makeup" placement='bottom'>
+							<Tab label={<FontAwesomeIcon icon={['fas', 'teeth-open']} />} />
+						</Tooltip>
+						<Tooltip title="Clothing" placement='bottom'>
+							<Tab label={<FontAwesomeIcon icon={['fas', 'shirt']} />} />
+						</Tooltip>
+						<Tooltip title="Accessories" placement='bottom'>
+							<Tab label={<FontAwesomeIcon icon={['fas', 'mitten']} />} />
+						</Tooltip>
+						<Tooltip title = "Tattoo's" placement='bottom'>
+							<Tab label={<FontAwesomeIcon icon={['fas', 'atom']} />} />
+						</Tooltip>
+					</Tabs>
+				</div>
+				<div className={classes.panel}>
+					<TabPanel value={value} index={0}>
+						<Face />
+					</TabPanel>
+					<TabPanel value={value} index={1}>
+						<Body />
+					</TabPanel>
+					<TabPanel value={value} index={2}>
+						<Hair />
+					</TabPanel>
+					<TabPanel value={value} index={3}>
+						<Wrapper>
+							<FaceMakeup />
+						</Wrapper>
+					</TabPanel>
+					<TabPanel value={value} index={4}>
+						<Clothes arms/>
+					</TabPanel>
+					<TabPanel value={value} index={5}>
+						<Accessories />
+					</TabPanel>
+					<TabPanel value={value} index={6}>
+						<Tattoo />
+					</TabPanel>
+				</div>
 			</div>
 
 			<Naked />
 			<Button
 				variant="contained"
-				color="success"
-				className={classes.save}
+				// color="success"
+				className={classes.saveBtn}
 				onClick={() => setSaving(true)}
 			>
-				Save
+				Save Eveything
 				<FontAwesomeIcon icon={['fas', 'floppy-disk']} />
 			</Button>
 

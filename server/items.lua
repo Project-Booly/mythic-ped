@@ -71,4 +71,48 @@ function RegisterItemUses()
 			end
 		end)
 	end
+
+	Inventory.Items:RegisterUse('kevlar', "Ped", function(source, item)
+		if not Player(source).state.isCuffed then
+			local char = Fetch:Source(source):GetData("Character")
+			if item.MetaData.kevlar then
+				TriggerClientEvent("Ped:Client:VestAnim", source)
+				Wait(300)
+				local ped = char:GetData("Ped")
+				if (ped.customization.components.kevlar?.drawableId or 0) ~= 0 then
+					Ped.Vest:Unequip(source)
+				end
+
+				Ped.Vest:Equip(
+					source,
+					item.MetaData.kevlar[char:GetData("Gender")]
+						or item.MetaData.kevlar[tostring(char:GetData("Gender"))]
+						or item.MetaData.kevlar
+				)
+				Inventory.Items:RemoveSlot(item.Owner, item.Name, 1, item.Slot, 1)
+			end
+		end
+	end)
+
+	Inventory.Items:RegisterUse('bag', "Ped", function(source, item)
+		if not Player(source).state.isCuffed then
+			local char = Fetch:Source(source):GetData("Character")
+			if item.MetaData.bag then
+				TriggerClientEvent("Ped:Client:VestAnim", source)
+				Wait(300)
+				local ped = char:GetData("Ped")
+				if (ped.customization.components.bag?.drawableId or 0) ~= 0 then
+					Ped.Bag:Unequip(source)
+				end
+
+				Ped.Bag:Equip(
+					source,
+					item.MetaData.bag[char:GetData("Gender")]
+						or item.MetaData.bag[tostring(char:GetData("Gender"))]
+						or item.MetaData.bag
+				)
+				Inventory.Items:RemoveSlot(item.Owner, item.Name, 1, item.Slot, 1)
+			end
+		end
+	end)
 end
