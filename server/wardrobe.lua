@@ -298,7 +298,7 @@ function RegisterWardrobeCallbacks()
 	Callbacks:RegisterServerCallback("Wardrobe:ExportClothing", function(source, data, cb)
 		local generatedCode = GenerateClothingCode()
 		local result = MySQL.insert.await(
-			"INSERT INTO exported_clothes (Code, Label, Data) VALUES(?, ?, ?)",
+			"INSERT INTO outfit_codes (Code, Label, Data) VALUES(?, ?, ?)",
 			{
 				generatedCode,
 				data.label,
@@ -313,7 +313,7 @@ function RegisterWardrobeCallbacks()
 	end)
 
 	Callbacks:RegisterServerCallback("Wardrobe:GetExportClothingByCode", function(source, code, cb)
-		local result = MySQL.query.await('SELECT Data FROM exported_clothes WHERE Code = ?', {
+		local result = MySQL.query.await('SELECT Data FROM outfit_codes WHERE Code = ?', {
 			tostring(code),
 		})
 
